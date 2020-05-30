@@ -88,7 +88,7 @@ bot.command('commands', (ctx) => {
     ctx.reply("Choose a command from the keyboard", commands)
 })
 
-bot.command('random', (ctx) => {
+bot.command('random', async(ctx) => {
     photo = await getRandom()
     ctx.replyWithPhoto(photo)
 })
