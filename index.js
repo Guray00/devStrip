@@ -58,7 +58,7 @@ async function turnoffScraper(){
     let res = await $.html(response.data)
     console.log(res)*/
 
-    const nightmare = Nightmare({
+    /*const nightmare = Nightmare({
     show: false, // will show browser window
     openDevTools: false // will open dev tools in browser window 
     });
@@ -84,7 +84,22 @@ async function turnoffScraper(){
 
     let res = await $(".post-content").find("img").first().attr("src")
     
-    return "http://turnoff.us"+res
+    return "http://turnoff.us"+res*/
+
+
+    const puppeteer = require('puppeteer');
+
+    puppeteer.launch().then(async browser => {
+        const page = await browser.newPage();
+        await page.goto("http://turnoff.us", { waitUntil: 'load' });
+
+        await page.waitForSelector('#random-link');
+        const hrefs = await page.$$eval('#random-link', as => as.map(a => a.href));
+        console.log(hrefs)
+        browser.close()
+    });
+
+
 }
 
 
@@ -116,6 +131,7 @@ async function getRandom(){
 **************************************************************/
 
 if (process.env.TEST == "true"){
+    turnoffScraper()
 }
 
 if (process.env.PRODUCTION == "true"){
