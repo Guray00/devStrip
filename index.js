@@ -5,7 +5,7 @@ const random  = require('random')
 const vm      = require('vm');
 const { Telegraf } = require('telegraf')
 
-websites = ["https://www.monkeyuser.com"]
+websites = ["monkeyuser", "commitstrip"]
 
 
 
@@ -39,14 +39,30 @@ async function monkeyUserScraper(){
 }
 
 
+async function commitstripScraper(){
+    response   = await axios("http://www.commitstrip.com/?random=1")
+    const html = response.data;                         // takes the html
+    const $    = await cheerio.load(html)               // loads html in cheerio for parsing
+        
+    let res = await $(".entry-content").find("img").first().attr("src")
+    
+    console.log(res)
+    return res;
+}
+
+
 async function getRandom(){
     let rand = random.int(0, websites.length-1)
     let url = websites[rand]
 
     let image = ""//await monkeyUserScraper()
 
-    if (url == "https://www.monkeyuser.com") {
+    if (url == "monkeyuser") {
         image = await monkeyUserScraper()
+    }
+
+    else if (url == "commitstrip"){
+        image = await commitstripScraper()
     }
 
     return image
@@ -60,46 +76,82 @@ async function getRandom(){
 
 **************************************************************/
 
+if (process.env.TEST == "true"){
 
-const bot = new Telegraf(process.env.BOT_TOKEN)
+}
 
-
-const commands = Telegraf.Extra
-  .markdown()
-  .markup((m) => m.keyboard([
-    m.callbackButton('🎲 Random strip', 'randomStrip')
-  ]))
+if (process.env.PRODUCTION == "true"){
+    const bot = new Telegraf(process.env.BOT_TOKEN)
 
 
-bot.use(async (ctx, next) => {
-    const start = new Date()
-    await next()
-    const ms = new Date() - start
-    console.log('Response time: %sms', ms)
-})
-  
-
-bot.start((ctx) => {
-    ctx.reply("Choose a command from the list!", commands)
-})
- 
-
-bot.command('commands', (ctx) => {
-    ctx.reply("Choose a command from the keyboard", commands)
-})
-
-bot.command('random', async(ctx) => {
-    photo = await getRandom()
-    ctx.replyWithPhoto(photo)
-})
+    const commands = Telegraf.Extra
+    .markdown()
+    .markup((m) => m.keyboard([
+        m.callbackButton('🎲 Random strip', 'randomStrip'),
+        [m.callbackButton('🐒 MonkeyUser', 'monkeyuser'), m.callbackButton('CommitStrip', 'commitstrip'),]
+    ]))
 
 
-bot.hears("🎲 Random strip", async (ctx, next)=>{
-    photo = await getRandom()
-    ctx.replyWithPhoto(photo)
-})
+    bot.use(async (ctx, next) => {
+        const start = new Date()
+        await next()
+        const ms = new Date() - start
+        console.log('Response time: %sms', ms)
+    })
+    
+
+    bot.start((ctx) => {
+        ctx.reply("Choose a command from the list!", commands)
+    })
+    
+
+    bot.command('commands', (ctx) => {
+        ctx.reply("Choose a command from the keyboard", commands)
+    })
 
 
-bot.launch()
+
+    /*************************************
+     *              COMMANDS
+     **************************************/
+
+    bot.command('random', async(ctx) => {
+        photo = await getRandom()
+        ctx.replyWithPhoto(photo)
+    })
+
+    bot.command('monkeyuser', async(ctx) => {
+        photo = await monkeyUserScraper()
+        ctx.replyWithPhoto(photo)
+    })
+
+    bot.command('commitstrip', async(ctx) => {
+        photo = await commitstripScraper()
+        ctx.replyWithPhoto(photo)
+    })
 
 
+     /*************************************
+     *              KWYBOARD
+     **************************************/
+
+
+    bot.hears("🎲 Random strip", async (ctx, next)=>{
+        photo = await getRandom()
+        ctx.replyWithPhoto(photo)
+    })
+
+    bot.hears("CommitStrip", async (ctx, next)=>{
+        photo = await commitstripScraper()
+        ctx.replyWithPhoto(photo)
+    })
+
+    bot.hears("🐒 MonkeyUser", async (ctx, next)=>{
+        photo = await monkeyUserScraper()
+        ctx.replyWithPhoto(photo)
+    })
+
+
+    bot.launch()
+
+}
