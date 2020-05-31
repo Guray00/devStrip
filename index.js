@@ -44,9 +44,7 @@ async function commitstripScraper(){
     const html = response.data;                         // takes the html
     const $    = await cheerio.load(html)               // loads html in cheerio for parsing
         
-    let res = await $(".entry-content").find("img").first().attr("src")
-    
-    console.log(res)
+    let res = await $(".entry-content").find("img").first().attr("src")    
     return res;
 }
 
@@ -87,8 +85,8 @@ if (process.env.PRODUCTION == "true"){
     const commands = Telegraf.Extra
     .markdown()
     .markup((m) => m.keyboard([
-        m.callbackButton('🎲 Random strip', 'randomStrip'),
-        [m.callbackButton('🐒 MonkeyUser', 'monkeyuser'), m.callbackButton('CommitStrip', 'commitstrip'),]
+        [m.callbackButton('🎲 Random strip', 'randomStrip')],
+        [m.callbackButton('🐒 MonkeyUser', 'monkeyuser'), m.callbackButton('CommitStrip', 'commitstrip')]
     ]))
 
 
