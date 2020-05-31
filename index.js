@@ -4,8 +4,9 @@ const cheerio = require('cheerio')
 const random  = require('random')
 const vm      = require('vm');
 const { Telegraf } = require('telegraf')
+const Nightmare = require('nightmare');
 
-websites = ["monkeyuser", "commitstrip"]
+websites = ["monkeyuser", "commitstrip", "turnoff"]
 
 
 
@@ -49,6 +50,44 @@ async function commitstripScraper(){
 }
 
 
+async function turnoffScraper(){
+    /*response   = await axios("http://turnoff.us")
+    const html = response.data;                         // takes the html
+    const $    = await cheerio.load(html)               // loads html in cheerio for parsing
+        
+    let res = await $.html(response.data)
+    console.log(res)*/
+
+    const nightmare = Nightmare({
+    show: false, // will show browser window
+    openDevTools: false // will open dev tools in browser window 
+    });
+
+    let url = 'http://turnoff.us';
+    const selector = '#random-link';
+
+    await nightmare
+            .goto(url)
+            .wait(selector)
+            .evaluate(selector => {
+        return {
+            random: document.querySelector(selector).getAttribute('href')
+        };
+    }, selector).end()
+    .then(extracted => {
+        url+=extracted.random
+    });
+
+    console.log(url)
+    let html = await axios(url);
+    const $  = await cheerio.load(html.data)  
+
+    let res = await $(".post-content").find("img").first().attr("src")
+    
+    return "http://turnoff.us"+res
+}
+
+
 async function getRandom(){
     let rand = random.int(0, websites.length-1)
     let url = websites[rand]
@@ -63,6 +102,8 @@ async function getRandom(){
         image = await commitstripScraper()
     }
 
+    else if (url == "turnoff") image = await turnoffScraper()
+
     return image
 }
 
@@ -75,7 +116,6 @@ async function getRandom(){
 **************************************************************/
 
 if (process.env.TEST == "true"){
-
 }
 
 if (process.env.PRODUCTION == "true"){
@@ -86,7 +126,8 @@ if (process.env.PRODUCTION == "true"){
     .markdown()
     .markup((m) => m.keyboard([
         [m.callbackButton('🎲 Random strip', 'randomStrip')],
-        [m.callbackButton('🐒 MonkeyUser', 'monkeyuser'), m.callbackButton('CommitStrip', 'commitstrip')]
+        [m.callbackButton('🐒 MonkeyUser', 'monkeyuser'), m.callbackButton('CommitStrip', 'commitstrip')], 
+        [m.callbackButton('TurnOff', 'turnoff')]
     ]))
 
 
@@ -130,7 +171,7 @@ if (process.env.PRODUCTION == "true"){
 
 
      /*************************************
-     *              KWYBOARD
+     *              KEYBOARD
      **************************************/
 
 
@@ -146,6 +187,11 @@ if (process.env.PRODUCTION == "true"){
 
     bot.hears("🐒 MonkeyUser", async (ctx, next)=>{
         photo = await monkeyUserScraper()
+        ctx.replyWithPhoto(photo)
+    })
+
+    bot.hears("TurnOff", async (ctx, next)=>{
+        photo = await turnoffScraper()
         ctx.replyWithPhoto(photo)
     })
 
