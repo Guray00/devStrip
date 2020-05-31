@@ -88,18 +88,18 @@ async function turnoffScraper(){
 
 
     const puppeteer = require('puppeteer');
-
-    puppeteer.launch().then(async browser => {
+    image = ""
+    await puppeteer.launch({args: ['--no-sandbox']}).then(async browser => {
         const page = await browser.newPage();
         await page.goto("http://turnoff.us", { waitUntil: 'load' });
 
         await page.waitForSelector('#random-link');
         const hrefs = await page.$$eval('#random-link', as => as.map(a => a.href));
-        console.log(hrefs)
+        image = hrefs[0]
         browser.close()
     });
 
-
+    return image
 }
 
 
@@ -208,7 +208,8 @@ if (process.env.PRODUCTION == "true"){
 
     bot.hears("TurnOff", async (ctx, next)=>{
         photo = await turnoffScraper()
-        ctx.replyWithPhoto(photo)
+        console.log(photo)
+	ctx.replyWithPhoto(photo)
     })
 
 
